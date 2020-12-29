@@ -393,3 +393,4 @@ MigrationBackup/
 .ionide/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,c++
+/Chip8/src/test_manual.cpp
