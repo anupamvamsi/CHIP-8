@@ -295,6 +295,48 @@ void Chip8::Op_Dxyn() {  // 23) Draw sprite at (Vx, Vy) with n Bytes of sprite
                          // data starting at the address stored in `index16` |
                          // Set Vf = 01 if any set pixels are unset | Vf = 00
                          // otherwise
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+  uint8_t v_y = (opcode16 & 0x00F0u) >> 4u;
+  uint8_t height_n = (opcode16 & 0x000Fu);  // height of sprite = n pixels
+
+  // Wrap (cut off) if sprite goes beyond screen bounds
+  uint8_t xPos = registers8_16[v_x] % VIDEO_WIDTH;
+  uint8_t yPos = registers8_16[v_y] % VIDEO_HEIGHT;
+
+  // Set Vf = 0
+  registers8_16[0xF] = 0;
+
+  for (unsigned int row = 0; row < height_n; ++row) {  // For `n` pixel height
+
+    // Each graphic will be `n` pixels high, and `n` is stored in `height_n`
+    uint8_t sprite_byte = memory8_4kb[index16 + row];  // sprite_byte = spB
+
+    for (unsigned int col = 0; col < 8; ++col) {  // For each pxl (bit) in spB
+
+      // Each graphic will be 8 pixels wide, that is why '8' is chosen
+
+      // Extracting one sprite pixel (bit) from spB and determining if it is on
+      // or not, and then determining if display pixel is on or not, and whether
+      // to switch it on or off depending on the sprite pixel
+      uint8_t sprite_pixel = sprite_byte & (0x80u >> col);
+      uint32_t* display_pixel =
+          &video32_64_32[((yPos + row) * VIDEO_WIDTH) + (xPos + col)];
+
+      // sp is on (sp = 1)
+      if (sprite_pixel) {
+        // dp is also on (dp = 1), set Vf = 01
+        if (*display_pixel == 0xFFFFFFFF)  // it's uint32
+        {
+          registers8_16[0xF] = 1;
+        }
+
+        // sp XOR dp (only done for sp = 1 case, since not required for sp = 0)
+        // dp ^= 0xFFFFFFFF because dp is 32 bits, and sp should also match that
+        *display_pixel ^= 0xFFFFFFFF;
+      }
+    }
+  }
 }
 
 void Chip8::Op_Ex9E() {  // 24) Skip next instruction if key with value in Vx is

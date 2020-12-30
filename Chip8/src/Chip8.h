@@ -5,6 +5,9 @@
 #include <cstdint>
 #include <random>
 
+const unsigned int VIDEO_HEIGHT = 32;
+const unsigned int VIDEO_WIDTH = 64;
+
 class Chip8 {
  public:
   // variables
@@ -20,7 +23,7 @@ class Chip8 {
   uint8_t delay_timer8{};             // 8-bit delay timer
   uint8_t sound_timer8{};             // 8-bit sound timer
   uint8_t keypad8_16[16]{};           // 8-bit keys - 16 (0 to F)
-  uint32_t video32_64_32[64 * 32]{};  // 32-bit (64x32) display memory
+  uint32_t video32_64_32[64 * 32]{};  // 32-bit (64x32 - w x h) display memory
   uint16_t opcode16;                  // 16-bit opcode (e.g., 0x7522)
 
   // functions
