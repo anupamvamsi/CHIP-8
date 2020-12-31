@@ -1,6 +1,7 @@
 #include "Chip8.h"
 
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <random>
 
@@ -341,44 +342,158 @@ void Chip8::Op_Dxyn() {  // 23) Draw sprite at (Vx, Vy) with n Bytes of sprite
 
 void Chip8::Op_Ex9E() {  // 24) Skip next instruction if key with value in Vx is
                          // pressed
+
+  uint8_t v_x = (opcode16 & 0x0F00) >> 8u;
+
+  uint8_t key = registers8_16[v_x];
+
+  if (keypad8_16[key]) {
+    pc16 += 2;
+  }
 }
 
 void Chip8::Op_ExA1() {  // 25) Skip next instruction if key with value in Vx is
                          // ~pressed
+
+  uint8_t v_x = (opcode16 & 0x0F00) >> 8u;
+
+  uint8_t key = registers8_16[v_x];
+
+  if (!keypad8_16[key]) {
+    pc16 += 2;
+  }
 }
 
 void Chip8::Op_Fx07() {  // 26) Set Vx = delay_timer8
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+
+  registers8_16[v_x] = delay_timer8;
 }
 
 void Chip8::Op_Fx0A() {  // 27) Wait for key press, store key value in Vx
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+
+  if (keypad8_16[0])
+    registers8_16[v_x] = 0;
+
+  else if (keypad8_16[1])
+    registers8_16[v_x] = 1;
+
+  else if (keypad8_16[2])
+    registers8_16[v_x] = 2;
+
+  else if (keypad8_16[3])
+    registers8_16[v_x] = 3;
+
+  else if (keypad8_16[4])
+    registers8_16[v_x] = 4;
+
+  else if (keypad8_16[5])
+    registers8_16[v_x] = 5;
+
+  else if (keypad8_16[6])
+    registers8_16[v_x] = 6;
+
+  else if (keypad8_16[7])
+    registers8_16[v_x] = 7;
+
+  else if (keypad8_16[8])
+    registers8_16[v_x] = 8;
+
+  else if (keypad8_16[9])
+    registers8_16[v_x] = 9;
+
+  else if (keypad8_16[10])
+    registers8_16[v_x] = 10;
+
+  else if (keypad8_16[11])
+    registers8_16[v_x] = 11;
+
+  else if (keypad8_16[12])
+    registers8_16[v_x] = 12;
+
+  else if (keypad8_16[13])
+    registers8_16[v_x] = 13;
+
+  else if (keypad8_16[14])
+    registers8_16[v_x] = 14;
+
+  else if (keypad8_16[15])
+    registers8_16[v_x] = 15;
+
+  else
+    pc16 -= 2;
 }
 
 void Chip8::Op_Fx15() {  // 28) Set delay_timer8 = Vx
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+
+  delay_timer8 = registers8_16[v_x];
 }
 
 void Chip8::Op_Fx18() {  // 29) Set sound_timer8 = Vx
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+
+  sound_timer8 = registers8_16[v_x];
 }
 
 void Chip8::Op_Fx1E() {  // 30) Set index16 = Vx + index16
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+
+  index16 += registers8_16[v_x];
 }
 
 void Chip8::Op_Fx29() {  // 31) Set index16 = address of sprite => corresp. hex
                          // digit in Vx
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+  uint8_t hex_digit_in_vx = registers8_16[v_x];  // get hex digit from Vx
+
+  index16 = FONTSET_START_ADDRESS + (hex_digit_in_vx * 5);  // each digit is 5B
 }
 
 void Chip8::Op_Fx33() {  // 32) Store Binary Coded Decimal equivalent of value
                          // in Vx @addresses `index16`, (`index16` + 1),
                          // (`index16` + 2)
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+  uint8_t value_vx = registers8_16[v_x];
+
+  for (int i = 0, j = 2; i < 3; i++, j--) {
+    // Store 100s place in (idx), 10s place in (idx + 1), 1s place in (idx + 2)
+    memory8_4kb[index16 + j] = (value_vx / (int)std::pow(10, i)) % 10;
+  }
 }
 
 void Chip8::Op_Fx55() {  // 33) Store values of [V0 to Vx] in memory starting
                          // @address `index16` | Set `index16` = `index16` + x +
                          // 1 after storing | This differs from Cowgod & Austin
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+
+  for (uint8_t i = 0; i < v_x + 1; i++) {
+    memory8_4kb[index16 + i] = registers8_16[i];
+  }
+
+  index16 += v_x + 1;
 }
 
 void Chip8::Op_Fx65() {  // 34) Fill [V0 to Vx] with values in memory starting
                          // @address `index16` | Set `index16` = `index16` + x +
                          // 1 after filling | This differs from Cowgod & Austin
+
+  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+
+  for (uint8_t i = 0; i < v_x + 1; i++) {
+    registers8_16[i] = memory8_4kb[index16 + i];
+  }
+
+  index16 += v_x + 1;
 }
 
 // ************************************************************************ //
