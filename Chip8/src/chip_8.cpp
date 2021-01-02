@@ -1,13 +1,11 @@
-#include "Chip8.h"
+#include "chip_8.h"
 
 #include <chrono>
 #include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <random>
-
-const unsigned int START_ADDRESS = 0x200;
-const unsigned int FONTSET_SIZE = 80;  // 16 chars (0 to F), 5 Bytes each
-const unsigned int FONTSET_START_ADDRESS = 0x50;  // from reserved mem
 
 uint8_t fontset[FONTSET_SIZE] = {
     // array [16 x 5B]
@@ -47,6 +45,57 @@ Chip8::Chip8()
 
   // Give random num b/w 0 and 255
   random_byte = std::uniform_int_distribution<uint8_t>(0, 255U);
+
+  // Fn Ptr table
+
+  // #
+  table[0x0] = &Chip8::Table0;
+  table[0x1] = &Chip8::Op_1nnn;
+  table[0x2] = &Chip8::Op_2nnn;
+  table[0x3] = &Chip8::Op_3xnn;
+  table[0x4] = &Chip8::Op_4xnn;
+  table[0x5] = &Chip8::Op_5xy0;
+  table[0x6] = &Chip8::Op_6xnn;
+  table[0x7] = &Chip8::Op_7xnn;
+  table[0x8] = &Chip8::Table8;
+  table[0x9] = &Chip8::Op_9xy0;
+  // a
+  table[0xA] = &Chip8::Op_Annn;
+  table[0xB] = &Chip8::Op_Bnnn;
+  table[0xC] = &Chip8::Op_Cxnn;
+  table[0xD] = &Chip8::Op_Dxyn;
+  table[0xE] = &Chip8::TableE;
+  table[0xF] = &Chip8::TableF;
+
+  // 0
+  table0[0x0] = &Chip8::Op_00E0;
+  table0[0xE] = &Chip8::Op_00EE;
+
+  // 8
+  table8[0x0] = &Chip8::Op_8xy0;
+  table8[0x1] = &Chip8::Op_8xy1;
+  table8[0x2] = &Chip8::Op_8xy2;
+  table8[0x3] = &Chip8::Op_8xy3;
+  table8[0x4] = &Chip8::Op_8xy4;
+  table8[0x5] = &Chip8::Op_8xy5;
+  table8[0x6] = &Chip8::Op_8xy6;
+  table8[0x7] = &Chip8::Op_8xy7;
+  table8[0xE] = &Chip8::Op_8xyE;
+
+  // E
+  tableE[0x1] = &Chip8::Op_ExA1;
+  tableE[0xE] = &Chip8::Op_Ex9E;
+
+  // F
+  tableF[0x07] = &Chip8::Op_Fx07;
+  tableF[0x0A] = &Chip8::Op_Fx0A;
+  tableF[0x15] = &Chip8::Op_Fx15;
+  tableF[0x18] = &Chip8::Op_Fx18;
+  tableF[0x1E] = &Chip8::Op_Fx1E;
+  tableF[0x29] = &Chip8::Op_Fx29;
+  tableF[0x33] = &Chip8::Op_Fx33;
+  tableF[0x55] = &Chip8::Op_Fx55;
+  tableF[0x65] = &Chip8::Op_Fx65;
 }
 
 void Chip8::LoadRom(char const* filename) {
@@ -72,9 +121,35 @@ void Chip8::LoadRom(char const* filename) {
   }
 }
 
-// *********************************************************************** //
-//                    THIRTY-FOUR INSTRUCTIONS OF CHIP-8                   //
-// *********************************************************************** //
+void Chip8::Cycle() {
+  // Fetch operation
+  opcode16 = (memory8_4kb[pc16] << 8u) | memory8_4kb[pc + 1];
+
+  // Increment before execn
+  pc16 += 2;
+
+  // Decode + Execute operations
+  ((*this).*(table[(opcode16 & 0xF000u) >> 12u]))();
+
+  // Decrement delay timer if set
+  if (delay_timer8 > 0) {
+    --delay_timer8;
+  }
+
+  if (sound_timer8 > 0) {
+    --sound_timer8;
+  }
+}
+
+void Chip8::Table0() { ((*this).*(table0[opcode16 & 0x000Fu]))(); }
+
+void Chip8::Table8() { ((*this).*(table8[opcode16 & 0x000Fu]))(); }
+
+void Chip8::TableE() { ((*this).*(tableE[opcode16 & 0x000Fu]))(); }
+
+void Chip8::TableF() { ((*this).*(tableF[opcode16 & 0x00FFu]))(); }
+
+void Chip8::Op_NULL() {}  // Do nothing
 
 void Chip8::Op_00E0() {  // 01) CLS
 

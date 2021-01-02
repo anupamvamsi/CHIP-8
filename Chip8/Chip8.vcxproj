@@ -19,12 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Chip8.cpp" />
-    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\chip_8.cpp" />
+    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\test_manual.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Chip8.h" />
+    <ClInclude Include="src\chip_8.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
