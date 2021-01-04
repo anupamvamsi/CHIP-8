@@ -90,8 +90,10 @@ class Chip8 {
   void Op_Fx55();  // 33
   void Op_Fx65();  // 34
 
-  std::mt19937 RandomGen;                              // Random engine
-  std::uniform_int_distribution<uint8_t> random_byte;  // For a range of randnum
+  std::mt19937 RandomGen;  // Random engine
+
+  // For a range of randnum - can only take in INT values, not BYTE
+  std::uniform_int_distribution<unsigned short> random_byte;
 
   // using (Chip8::*Chip8Func)() = void;  // Why can't I use this?
   // using Chip8Func = void;              // Should be used like this?

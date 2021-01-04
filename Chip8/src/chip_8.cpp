@@ -3,9 +3,9 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
-#include <cstring>
 #include <fstream>
 #include <random>
+#include <string>
 
 uint8_t fontset[FONTSET_SIZE] = {
     // array [16 x 5B]
@@ -44,7 +44,7 @@ Chip8::Chip8()
   }
 
   // Give random num b/w 0 and 255
-  random_byte = std::uniform_int_distribution<uint8_t>(0, 255U);
+  random_byte = std::uniform_int_distribution<unsigned short>(0, 255);
 
   // Fn Ptr table
 
@@ -123,7 +123,7 @@ void Chip8::LoadRom(char const* filename) {
 
 void Chip8::Cycle() {
   // Fetch operation
-  opcode16 = (memory8_4kb[pc16] << 8u) | memory8_4kb[pc + 1];
+  opcode16 = (memory8_4kb[pc16] << 8u) | memory8_4kb[pc16 + 1];
 
   // Increment before execn
   pc16 += 2;
@@ -206,7 +206,7 @@ void Chip8::Op_4xnn() {  // 06) Skip next instruction if Vx != nn
 void Chip8::Op_5xy0() {  // 07) Skip next instruction if Vx = Vy
 
   uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
-  uint8_t v_y = (opcode16 & 0x0F00u) >> 4u;
+  uint8_t v_y = (opcode16 & 0x00F0u) >> 4u;
 
   if (registers8_16[v_x] == registers8_16[v_y]) {
     pc16 += 2;
@@ -297,13 +297,21 @@ void Chip8::Op_8xy6() {  // 16) Vy >> Vx | Shift Right Vy (1-bit) and store in
                          // Vx | Don't modify Vy | Store Vy's LSB in Vf before
                          // shifting | This differs from Cowgod & Austin Morlan
 
-  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
-  uint8_t v_y = (opcode16 & 0x00F0u) >> 4u;
+  // uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+  // uint8_t v_y = (opcode16 & 0x00F0u) >> 4u;
 
-  // Store Vy's LSB in Vf
-  registers8_16[0xF] = registers8_16[v_y] & 0x1;
+  //// Store Vy's LSB in Vf
+  // registers8_16[0xF] = registers8_16[v_y] & 0x1;
 
-  registers8_16[v_x] = registers8_16[v_y] >> 1u;
+  // registers8_16[v_x] = registers8_16[v_y] >> 1u;
+
+  // austin/cowgod:
+  uint8_t Vx = (opcode16 & 0x0F00u) >> 8u;
+
+  // Save LSB in VF
+  registers8_16[0xF] = (registers8_16[Vx] & 0x1u);
+
+  registers8_16[Vx] >>= 1;
 }
 
 void Chip8::Op_8xy7() {  // 17) Set Vx = Vy - Vx | Vf = 00 if borrow, else
@@ -325,13 +333,21 @@ void Chip8::Op_8xyE() {  // 18) Vx << Vy | Shift Left Vy (1-bit) -> store in Vx
                          // Don't modify Vy | Store Vy's MSB in Vf before
                          // shifting | This differs from Cowgod & Austin Morlan
 
-  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
-  uint8_t v_y = (opcode16 & 0x00F0u) >> 4u;
+  // uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+  // uint8_t v_y = (opcode16 & 0x00F0u) >> 4u;
 
-  // Store MSB in Vf
-  registers8_16[0xF] = (registers8_16[v_y] & 0x80u) >> 7u;
+  //// Store MSB in Vf
+  // registers8_16[0xF] = (registers8_16[v_y] & 0x80u) >> 7u;
 
-  registers8_16[v_x] = registers8_16[v_y] << 1u;
+  // registers8_16[v_x] = registers8_16[v_y] << 1u;
+
+  // austin/cowgod:
+  uint8_t Vx = (opcode16 & 0x0F00u) >> 8u;
+
+  // Save MSB in VF
+  registers8_16[0xF] = (registers8_16[Vx] & 0x80u) >> 7u;
+
+  registers8_16[Vx] <<= 1;
 }
 
 void Chip8::Op_9xy0() {  // 19) Skip next instruction if Vx != Vy
@@ -549,26 +565,40 @@ void Chip8::Op_Fx55() {  // 33) Store values of [V0 to Vx] in memory starting
                          // @address `index16` | Set `index16` = `index16` + x +
                          // 1 after storing | This differs from Cowgod & Austin
 
-  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+  /*uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
 
   for (uint8_t i = 0; i < v_x + 1; i++) {
     memory8_4kb[index16 + i] = registers8_16[i];
   }
 
-  index16 += v_x + 1;
+  index16 += v_x + 1;*/
+
+  // austin/cowgod:
+  uint8_t Vx = (opcode16 & 0x0F00u) >> 8u;
+
+  for (uint8_t i = 0; i <= Vx; ++i) {
+    memory8_4kb[index16 + i] = registers8_16[i];
+  }
 }
 
 void Chip8::Op_Fx65() {  // 34) Fill [V0 to Vx] with values in memory starting
                          // @address `index16` | Set `index16` = `index16` + x +
                          // 1 after filling | This differs from Cowgod & Austin
 
-  uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
+  /*uint8_t v_x = (opcode16 & 0x0F00u) >> 8u;
 
   for (uint8_t i = 0; i < v_x + 1; i++) {
     registers8_16[i] = memory8_4kb[index16 + i];
   }
 
-  index16 += v_x + 1;
+  index16 += v_x + 1;*/
+
+  // austin/cowgod:
+  uint8_t Vx = (opcode16 & 0x0F00u) >> 8u;
+
+  for (uint8_t i = 0; i <= Vx; ++i) {
+    registers8_16[i] = memory8_4kb[index16 + i];
+  }
 }
 
 // ************************************************************************ //
