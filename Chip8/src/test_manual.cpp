@@ -1,3 +1,9 @@
+/*
+  THIS FILE IS NOT PART OF THE CHIP-8 INTERPRETER.
+  THIS WAS USED FOR THE PURPOSE OF MY TESTING/LEARNING.
+  DO NOT INCLUDE THIS FILE IN THE BUILD, YOU WILL RUN INTO ERRORS.
+*/
+
 #include <bitset>
 #include <cstdint>
 #include <iostream>
@@ -5,7 +11,6 @@
 using namespace std;
 
 int main() {
-
   ////////////////////////////////////
   // Bit extraction check
 
