@@ -1,7 +1,7 @@
 # CHIP-8
 ## Implementation(s) (yet another (and some more?)) of the CHIP-8 interpreter!
 
-Just a project started out by aiming towards getting a hold on C++. 
+Just a project started out by aiming towards getting a hold on/learning C++. 
 
 Resources for the project:
 
@@ -16,7 +16,7 @@ More resources can be found by going through the above four in detail (quite a r
 
 1. Clone the repository.
 2. Get the SDL Library - check out this guide for Visual Studio on how to set it up: https://lazyfoo.net/tutorials/SDL/01_hello_SDL/windows/msvc2019/index.php
-3. Build the solution (assuming you are using Visual Studio: Ctrl + B).
+3. Build the solution (assuming you are using Visual Studio: Ctrl + B). **DO NOT BUILD/INCLUDE `test_manual.cpp`**.
 4. Go to bin > x64 > Debug through the command line (Windows cmd): `cd yourDirectoryPath\Chip8\bin\x64\Debug`
 5. Once you are in the correct directory with the built .exe file, make sure you have the roms you need in it.
 6. Through the command prompt (cmd), type: `Chip8.exe 10 3 test_opcode.ch8` `[Usage: Chip8.exe <Scale> <Delay> <ROM>]`
